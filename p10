@@ -1,0 +1,27 @@
+
+## Program to convert an Integer to a String in any arbitrary base
+## this program uses a list as a stack (append is push and pop is pop)
+
+
+rStack = []
+
+def toStr(n,base):
+    print n
+    print rStack
+    convertString = "0123456789ABCDEF"
+    if n < base:
+        rStack.append(convertString[n])
+	return
+    else:
+        rStack.append(convertString[n % base])
+    toStr(n // base, base)
+    
+
+
+toStr(1453,16)
+
+
+res = ""
+while len(rStack) > 0:
+    res = res + str(rStack.pop())
+print res
