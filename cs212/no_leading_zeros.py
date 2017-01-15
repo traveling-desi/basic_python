@@ -20,10 +20,13 @@ def compile_formula(formula, verbose=False):
 
     letters = ''.join(set(re.findall('[A-Z]', formula)))
     parms = ', '.join(letters)
-    leading = ''.join([i[0] for i in re.split('([A-Z]+)', formula) if str.isalpha(i)])
     tokens = map(compile_word, re.split('([A-Z]+)', formula))
     body = ''.join(tokens)
-    f = 'lambda %s: %s if 0 not in %s' % (parms, body, leading)
+    ## added code
+    leading = ' and '.join([str(i[0]) + '!= 0' for i in re.split('([A-Z]+)', formula) if str.isalpha(i)])
+    body = ' and '.join([body, leading])
+    ## end: added code
+    f = 'lambda %s: %s' % (parms, body)
     if verbose: print f
     return eval(f), letters
 
@@ -56,4 +59,4 @@ def test():
     assert faster_solve('YOU == ME**2') == ('289 == 17**2' or '576 == 24**2' or '841 == 29**2')
     assert faster_solve('X / X == X') == '1 / 1 == 1'
     return 'tests pass'
-test()
+print test()
