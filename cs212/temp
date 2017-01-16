@@ -1,0 +1,31 @@
+def subway(**lines):
+    """Define a subway map. Input is subway(linename='station1 station2...'...).
+    Convert that and return a dict of the form: {station:{neighbor:line,...},...}"""
+    ## your code here
+
+    subDict = dict()
+    for (key, value) in lines.items():
+	stations = value.split()
+	subDict[stations[0]] = dict()
+	subDict[stations[0]][stations[1]] = key
+	for i in range(1, len(stations)-1):
+		try:
+			subDict[stations[i]][stations[i-1]] = key
+			subDict[stations[i]][stations[i+1]] = key
+		except:
+			subDict[stations[i]] = dict()
+			subDict[stations[i]][stations[i-1]] = key
+			subDict[stations[i]][stations[i+1]] = key
+    return subDict
+		
+	
+	
+
+boston = subway(
+    blue='bowdoin government state aquarium maverick airport suffolk revere wonderland',
+    orange='oakgrove sullivan haymarket state downtown chinatown tufts backbay foresthills',
+    green='lechmere science north haymarket government park copley kenmore newton riverside',
+    red='alewife davis porter harvard central mit charles park downtown south umass mattapan')
+
+
+print boston
