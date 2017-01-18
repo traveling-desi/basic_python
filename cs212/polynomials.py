@@ -59,6 +59,39 @@ def poly(coefs):
     # your code here (I won't repeat "your code here"; there's one for each function)
 
 
+    def polynomial(x):
+	return eval(retExp)
+
+    retExp = ''
+    for i in range(len(coefs)):
+	if coefs[i] != 0:
+		if i == 0:
+			retExp = str(coefs[i]) + retExp
+		elif i == 1:
+			strx = 'x'
+			if any(coefs[:i]):
+				strx = strx + ' + '
+			if coefs[i] == 1:
+				retExp = strx + retExp
+			else:
+				retExp = str(coefs[i]) + ' * ' +  strx + retExp
+		else:
+			strx = 'x**' + str(i)
+			if any(coefs[:i]):
+				strx = strx + ' + '
+			if coefs[i] == 1:
+				retExp = strx + retExp
+			else:
+				retExp = str(coefs[i]) + ' * ' + strx + retExp
+				
+    polynomial.__name__ = retExp
+    polynomial.coefs = coefs
+	
+    return polynomial
+	
+	
+
+
 def test_poly():
     global p1, p2, p3, p4, p5, p9 # global to ease debugging in an interactive session
 
@@ -68,10 +101,12 @@ def test_poly():
         assert p1(x) == 30 * x**2 + 20 * x + 10
     assert same_name(p1.__name__, '30 * x**2 + 20 * x + 10')
 
+    #print p1.coefs
     assert is_poly(p1)
     assert not is_poly(abs) and not is_poly(42) and not is_poly('cracker')
 
     p3 = poly((0, 0, 0, 1))
+    #print p3.__name__
     assert p3.__name__ == 'x**3'
     p9 = mul(p3, mul(p3, p3))
     assert p9(2) == 512
@@ -109,22 +144,54 @@ def same_name(name1, name2):
 def is_poly(x):
     "Return true if x is a poly (polynomial)."
     ## For examples, see the test_poly function
+    try:
+    	return poly(x.coefs).__name__ == x.__name__
+    except:
+	return False
 
 def add(p1, p2):
     "Return a new polynomial which is the sum of polynomials p1 and p2."
 
+    polLenMax = max(len(p1.coefs), len(p2.coefs))
+    polLenMin = min(len(p1.coefs), len(p2.coefs))
+ 
+    p3 = []
+    for i in range(polLenMin):
+	p3.append(p1.coefs[i] + p2.coefs[i])
+    p3 = p3 + list(p1.coefs[polLenMin:polLenMax]) + list(p2.coefs[polLenMin:polLenMax])
+
+    return poly(tuple(p3))
+    
 
 def sub(p1, p2):
     "Return a new polynomial which is the difference of polynomials p1 and p2."
+
+    p2.coefs = tuple([-i for i in p2.coefs])
+    return add(p1, p2)
 
 
 def mul(p1, p2):
     "Return a new polynomial which is the product of polynomials p1 and p2."
 
+    p3 = [0] * (len(p1.coefs) -1 + len(p2.coefs) -1 + 1)
+
+    for i in range(len(p1.coefs)):
+	for j in range(len(p2.coefs)):
+		p3[i+j] += p1.coefs[i] * p2.coefs[j]
+
+    return poly(tuple(p3))
 
 def power(p, n):
     "Return a new polynomial which is p to the nth power (n a non-negative integer)."
 
+    if n == 0:
+	return poly((1,))
+    result = p
+    if n%2 == 0:
+	result = mul(power(result, n/2), power(result, n/2))
+    else:
+	result = mul(power(result, n-1), result)
+    return result
 
 """
 If your calculus is rusty (or non-existant), here is a refresher:
@@ -140,10 +207,29 @@ to the function integral (withh default C=0).
     
 def deriv(p):
     "Return the derivative of a function p (with respect to its argument)."
+    
+    retP = [0] * (len(p.coefs) -1)
+
+    for i in range(1, len(p.coefs)):
+	retP[i-1] = i*p.coefs[i]
+
+    return poly(tuple(retP))
+	
 
 
 def integral(p, C=0):
     "Return the integral of a function p (with respect to its argument)."
+
+    retP = [0] * (len(p.coefs) + 1)
+    retP[0] = C
+
+    for i in range(len(p.coefs)):
+        retP[i+1] = p.coefs[i]/(i+1)
+
+    return poly(tuple(retP))
+
+
+
 
 
 """
@@ -175,3 +261,4 @@ def test_poly2():
     assert p1(100) == newp1(100)
     assert same_name(p1.__name__,newp1.__name__)
 
+print test_poly()
