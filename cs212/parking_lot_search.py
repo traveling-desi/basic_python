@@ -106,7 +106,7 @@ puzzle1 = (
 
 N = 8
 
-def solve_parking_puzzle(start, N=N):
+def solve_parking_puzzle(startState, N=N):
     """Solve the puzzle described by the starting position (a tuple 
     of (object, locations) pairs).  Return a path of [state, action, ...]
     alternating items; an action is a pair (object, distance_moved),
@@ -115,9 +115,7 @@ def solve_parking_puzzle(start, N=N):
     def is_goal(state):
 	return state[1][-1][-1] == state[0][-1][0]
 
-    return path_actions(shortest_path_search(start, pSuccessors, is_goal))
-
-
+    return path_actions(shortest_path_search(startState, pSuccessors, is_goal))
 
 
 def pSuccessors(state):
@@ -125,46 +123,47 @@ def pSuccessors(state):
 	target = state[1][1]
 	wall = state[-1][1]
 
-	stateList = {}
-	#print "INIITIAL STATE :", state
+	stateDict = {}
 
 	for i in range(1, len(state) -1):
+
 		(object, location) = state[i]
 		carLen = len(location)
 	 	car = object
 		incr = location[1] - location[0]
 		carStart = location[0]
 		carEnd = location[-1]
-		#print "NEW CAR :", state [i]
 
 		otherCars = [item for j in range(1, len(state)-1) for item in state[j][1] if j != i]
-		#print "OTHECARS", otherCars
 
+		## Move left of top
 		carStart -= incr
+		carEnd = location[-1]
 		while carStart not in wall and carStart not in otherCars:
-			cars = state[:i] + ((car, locs(carStart, carLen, incr)),) + state[i+1:-1]
-			stateList[grid(cars)] = 'move ' + car + ' up or left by' + str(incr)
+			cars = state[1:i] + ((car, locs(carStart, carLen, incr)),) + state[i+1:-1]
+			if incr == 1:
+				direction = 'right'
+			else:
+				direction = 'up'
+			stateDict[grid(cars)] = 'move ' + car + ' ' + direction + ' by ' + str(abs(carStart - location[0]))
 			carStart -= incr
-			#print "HERE"
-			#print cars
+
+		## Move right or bottom
 		carStart = location[0]
 		carEnd = location[-1]
 		carEnd += incr
 		carStart += incr
 		while carEnd not in wall and carEnd not in otherCars:
-			cars = state[:i] + ((car, locs(carStart, carLen, incr)),) + state[i+1:-1]
-			stateList[grid(cars)] = 'move ' + car +' down or right by' + str(incr)
-			#print "HERER 2"
-			#print cars
+			cars = state[1:i] + ((car, locs(carStart, carLen, incr)),) + state[i+1:-1]
+			if incr == 1:
+				direction = 'left'
+			else:
+				direction = 'down'
+			stateDict[grid(cars)] = 'move ' + car + ' ' + direction + ' by ' + str(abs(carStart - location[0]))
 			carEnd += incr
 			carStart += incr
-			#print car
-			#print carStart
-			#print carEnd
-			#print otherCars
-			#print wall
 			
-	return stateList	
+	return stateDict	
 
 
 
@@ -187,10 +186,6 @@ def grid(cars, N=N):
     tuple of pairs like ('*', (26, 27)). The return result is a big tuple
     of the 'cars' pairs along with the walls and goal pairs."""
 
-
-    #print "GRID CARS" , cars
-
-
     retList = []
 
     if N%2 == 0:
@@ -199,10 +194,7 @@ def grid(cars, N=N):
 	mid = ((N+1)*N/2) -1
     retList.append(('@', (mid,)))
 
-    #for (object, location) in cars:
-#	retList.append((object, location))
-
-    retList = list(cars)
+    retList += list(cars)
 
     f1 = lambda i,N : i
     f2 = lambda i,N : i*N
@@ -230,28 +222,28 @@ def show(state, N=N):
 
 # Here we see the grid and locs functions in use:
 
-## puzzle1 = grid((
-##     ('*', locs(26, 2)),
-##     ('G', locs(9, 2)),
-##     ('Y', locs(14, 3, N)),
-##     ('P', locs(17, 3, N)),
-##     ('O', locs(41, 2, N)),
-##     ('B', locs(20, 3, N)),
-##     ('A', locs(45, 2))))
-## 
-## puzzle2 = grid((
-##     ('*', locs(26, 2)),
-##     ('B', locs(20, 3, N)),
-##     ('P', locs(33, 3)),
-##     ('O', locs(41, 2, N)),
-##     ('Y', locs(51, 3))))
-## 
-## puzzle3 = grid((
-##     ('*', locs(25, 2)),
-##     ('B', locs(19, 3, N)),
-##     ('P', locs(36, 3)),
-##     ('O', locs(45, 2, N)),
-##     ('Y', locs(49, 3))))
+puzzle1 = grid((
+    ('*', locs(26, 2)),
+    ('G', locs(9, 2)),
+    ('Y', locs(14, 3, N)),
+    ('P', locs(17, 3, N)),
+    ('O', locs(41, 2, N)),
+    ('B', locs(20, 3, N)),
+    ('A', locs(45, 2))))
+
+puzzle2 = grid((
+    ('*', locs(26, 2)),
+    ('B', locs(20, 3, N)),
+    ('P', locs(33, 3)),
+    ('O', locs(41, 2, N)),
+    ('Y', locs(51, 3))))
+
+puzzle3 = grid((
+    ('*', locs(25, 2)),
+    ('B', locs(19, 3, N)),
+    ('P', locs(36, 3)),
+    ('O', locs(45, 2, N)),
+    ('Y', locs(49, 3))))
 
 
 # Here are the shortest_path_search and path_actions functions from the unit.
@@ -282,20 +274,14 @@ def path_actions(path):
     return path[1::2]
 
 
-puzzle1 = (
- ('@', (31,)),
- ('*', (26, 27)),
- ('G', (9, 10)),
- ('Y', (14, 22, 30)),
- ('P', (17, 25, 33)),
- ('O', (41, 49)),
- ('B', (20, 28, 36)),
- ('A', (45, 46)),
- ('|', (0, 1, 2, 3, 4, 5, 6, 7, 8, 15, 16, 23, 24, 32, 39,
-        40, 47, 48, 55, 56, 57, 58, 59, 60, 61, 62, 63)))
+puzzle1 = grid((
+    ('*', locs(26, 2)),
+    ('G', locs(9, 2)),
+    ('Y', locs(14, 3, N)),
+    ('P', locs(17, 3, N)),
+    ('O', locs(41, 2, N)),
+    ('B', locs(20, 3, N)),
+    ('A', locs(45, 2))))
 
-
-
-#print pSucessors(puzzle1)
-print show(puzzle1)
+print "START   TTTTTTTTTTT"
 print solve_parking_puzzle(puzzle1)
