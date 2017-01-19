@@ -118,6 +118,10 @@ def solve_parking_puzzle(startState, N=N):
     return path_actions(shortest_path_search(startState, pSuccessors, is_goal))
 
 
+def is_goal(state):
+        return state[1][-1][-1] == state[0][-1][0]
+
+
 def pSuccessors(state):
 	goal = state[0][1]
 	target = state[1][1]
@@ -285,3 +289,52 @@ puzzle1 = grid((
 
 print "START   TTTTTTTTTTT"
 print solve_parking_puzzle(puzzle1)
+
+def test_parking():
+    assert valid_solution(puzzle1, 4)
+    assert valid_solution(puzzle2, 7)
+    assert valid_solution(puzzle3, 7)
+    assert valid_solution(puzzle4, 8)
+    assert locs(26, 2) == (26, 27)
+    assert locs(20, 3, 8) == (20, 28, 36)
+    assert same_state(
+        grid((('*', locs(25, 2)),
+              ('B', locs(19, 3, N)),
+              ('P', locs(36, 3)),
+              ('O', locs(45, 2, N)),
+              ('Y', locs(49, 3)))),
+        (('*', (25, 26)), ('B', (19, 27, 35)), ('P', (36, 37, 38)), 
+         ('O', (45, 53)), ('Y', (49, 50, 51)), 
+         ('|', (0, 1, 2, 3, 4, 5, 6, 7, 56, 57, 58, 59, 60, 61, 62, 63, 
+                8, 16, 24, 32, 40, 48, 15, 23, 39, 47, 55)), 
+            ('@', (31,))))
+
+puzzle4 = grid((
+    ('*', locs(26, 2)),
+    ('G', locs(9, 2)),
+    ('Y', locs(14, 3, N)),
+    ('P', locs(17, 3, N)),
+    ('O', locs(41, 2, N)),
+    ('B', locs(20, 3, N)),
+    ('A', locs(45, 2)),
+    ('S', locs(51, 3))))
+
+def valid_solution(puzzle, length):
+    "Does solve_parking_puzzle solve this puzzle in length steps?"
+    path = solve_parking_puzzle(puzzle)
+    return (len(path_actions(path)) == length and
+            same_state(path[0], puzzle) and
+            is_goal(path[-1]) and
+            all(legal_step(path[i:i+3]) for i in range(0,len(path)-2, 2)))
+
+def legal_step(path):
+    "A legal step has an action that leads to a valid successor state."
+    # Here the path must be of the form [s0, a, s1].
+    state1, action, state2 = path 
+    succs = psuccessors(state1)
+    return state2 in succs and succs[state2] == action
+
+def same_state(state1, state2):
+    "Two states are the same if all corresponding sets of locs are the same."
+    d1, d2 = dict(state1), dict(state2)
+    return all(set(d1[key]) == set(d2[key]) for key in set(d1) | set(d2))
