@@ -104,52 +104,68 @@ puzzle1 = (
 
 # Your task is to define solve_parking_puzzle:
 
-N = 8
+N =8
 
-def solve_parking_puzzle(startState, N=N):
+def solve_parking_puzzle(start, N=N):
     """Solve the puzzle described by the starting position (a tuple 
     of (object, locations) pairs).  Return a path of [state, action, ...]
     alternating items; an action is a pair (object, distance_moved),
     such as ('B', 16) to move 'B' two squares down on the N=8 grid."""
 
     def is_goal(state):
-	return state[1][-1][-1] == state[0][-1][0]
+	#print "GOAL", state
+    	d = dict(state)
+    	return set(d['*']) & set(d['@'])
+	#ret state[1][-1][-1] == state[0][-1][0]
 
-    return path_actions(shortest_path_search(startState, pSuccessors, is_goal))
+    return shortest_path_search(start, psuccessors, is_goal)
+    #return path_actions(shortest_path_search(startState, psuccessors, is_goal))
+
 
 
 def is_goal(state):
-        return state[1][-1][-1] == state[0][-1][0]
+        d = dict(state)
+        return set(d['*']) & set(d['@'])
+        #return state[1][-1][-1] == state[0][-1][0]
 
 
-def pSuccessors(state):
-	goal = state[0][1]
-	target = state[1][1]
-	wall = state[-1][1]
+def psuccessors(d):
+	state = dict(d)
+	goal = state['@'][0]
+	wall = state['|']
 
 	stateDict = {}
 
-	for i in range(1, len(state) -1):
-
-		(object, location) = state[i]
+	#print show(d)
+	for (object, location) in state.items():
+		if object == '@' or object == '|':
+			continue
 		carLen = len(location)
 	 	car = object
 		incr = location[1] - location[0]
 		carStart = location[0]
 		carEnd = location[-1]
 
-		otherCars = [item for j in range(1, len(state)-1) for item in state[j][1] if j != i]
+		#otherCars = [item for j in range(1, len(state)-1) for item in state[j][1] if j != i]
+		otherCars = [i for (item, value) in state.items() for i in value if item != car and item != '@']
 
 		## Move left of top
 		carStart -= incr
 		carEnd = location[-1]
+
+		#print
+		#print "CAR", car, state
+		#print "OTHERCARS", otherCars
 		while carStart not in wall and carStart not in otherCars:
-			cars = state[1:i] + ((car, locs(carStart, carLen, incr)),) + state[i+1:-1]
+			#cars = state[1:i] + ((car, locs(carStart, carLen, incr)),) + state[i+1:-1]
+			state[car] = locs(carStart, carLen, incr)
+			#print "STATE", state
 			if incr == 1:
-				direction = 'right'
+				direction = 'left'
 			else:
 				direction = 'up'
-			stateDict[grid(cars)] = 'move ' + car + ' ' + direction + ' by ' + str(abs(carStart - location[0]))
+			#stateDict[grid(cars)] = 'move ' + car + ' ' + direction + ' by ' + str(abs(carStart - location[0]))
+			stateDict[tuple(state.items())] = 'move ' + car + ' ' + direction + ' by ' + str(abs(carStart - location[0]))
 			carStart -= incr
 
 		## Move right or bottom
@@ -158,15 +174,25 @@ def pSuccessors(state):
 		carEnd += incr
 		carStart += incr
 		while carEnd not in wall and carEnd not in otherCars:
-			cars = state[1:i] + ((car, locs(carStart, carLen, incr)),) + state[i+1:-1]
+			#cars = state[1:i] + ((car, locs(carStart, carLen, incr)),) + state[i+1:-1]
+			state[car] = locs(carStart, carLen, incr)
 			if incr == 1:
-				direction = 'left'
+				direction = 'right'
 			else:
 				direction = 'down'
-			stateDict[grid(cars)] = 'move ' + car + ' ' + direction + ' by ' + str(abs(carStart - location[0]))
+			#stateDict[grid(cars)] = 'move ' + car + ' ' + direction + ' by ' + str(abs(carStart - location[0]))
+			stateDict[tuple(state.items())] = 'move ' + car + ' ' + direction + ' by ' + str(abs(carStart - location[0]))
 			carEnd += incr
 			carStart += incr
-			
+			#print "STATE", state
+
+		carStart = location[0]
+		state[car] = locs(carStart, carLen, incr)
+
+	#print "STATEDICT", 
+	#for i,j in stateDict.items():
+	#	print i,j
+	#print "STATEDICT END"
 	return stateDict	
 
 
@@ -204,8 +230,8 @@ def grid(cars, N=N):
     f2 = lambda i,N : i*N
     f3 = lambda i,N : (N-1)+(i*N)
     f4 = lambda i,N : ((N-1)*N) + i
-    wallList = set([f(i,N) for i in range(N) for f in (f1, f2, f3, f4)])
-    wallList.remove(mid)
+    wallList = set([f(i,N) for i in range(N) for f in (f1, f2, f3, f4) if f(i,N) != mid])
+    #wallList.remove(mid)
 
     retList.append(('|', tuple(wallList)))
 
@@ -259,10 +285,14 @@ def shortest_path_search(start, successors, is_goal):
     if is_goal(start):
         return [start]
     explored = set() # set of states we have visited
+
+
     frontier = [ [start] ] # ordered list of paths we have blazed
     while frontier:
         path = frontier.pop(0)
         s = path[-1]
+    	#print "EXPOLRED", explored
+	#print "SHORTED STATE " , s
         for (state, action) in successors(s).items():
             if state not in explored:
                 explored.add(state)
@@ -278,8 +308,7 @@ def path_actions(path):
     return path[1::2]
 
 
-puzzle1 = grid((
-    ('*', locs(26, 2)),
+puzzle1 = grid((('*', locs(26, 2)),
     ('G', locs(9, 2)),
     ('Y', locs(14, 3, N)),
     ('P', locs(17, 3, N)),
@@ -287,8 +316,9 @@ puzzle1 = grid((
     ('B', locs(20, 3, N)),
     ('A', locs(45, 2))))
 
-print "START   TTTTTTTTTTT"
-print solve_parking_puzzle(puzzle1)
+#print "START   TTTTTTTTTTT"
+#print show(puzzle1)
+#print path_actions(solve_parking_puzzle(puzzle1))
 
 def test_parking():
     assert valid_solution(puzzle1, 4)
@@ -338,3 +368,5 @@ def same_state(state1, state2):
     "Two states are the same if all corresponding sets of locs are the same."
     d1, d2 = dict(state1), dict(state2)
     return all(set(d1[key]) == set(d2[key]) for key in set(d1) | set(d2))
+
+test_parking()

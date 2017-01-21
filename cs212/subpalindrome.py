@@ -24,6 +24,7 @@ def longest_subpalindrome_slice(text):
 	return (0,0)
     palList = []
     text = text.lower()
+    palList.append((0,1))
     for i in range(1, len(text)-1):
 	if text[i-1] == text[i+1]:
 		palList.append(find_palindrome(text, i-1, i+1))
@@ -57,6 +58,8 @@ def test():
     assert L('xxxxx') == (0, 5)
     assert L('Mad am I ma dam.') == (0, 15)
     assert L('') == (0, 0)
+    assert L('abc') == (0, 1) or L('abc') == (1, 2) or  L('abc') == (2, 3)
+    assert L('aabc') == (0, 2)
     return 'tests pass'
 
 print test()
